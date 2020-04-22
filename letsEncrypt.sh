@@ -60,10 +60,10 @@
 ####### Variables #######
 
 # FQDN of the JSS. This cannot be a .local domain
-	DOMAIN="jss.company.com"
+	DOMAIN="server.jamfpro.private"
 
 # Email address used to sign the cert. Renewal notices will be sent to this address.
-	EMAIL="you@domain.com"
+	EMAIL="mdm@jamfpro.private"
 
 # JSS Tomcat Service (default is jamf.tomcat8 for Casper Suite 9.93). May need to
 # be changed if JSS was manually installed or if there is a different verison of
@@ -95,7 +95,7 @@
 
 # JSS keystore location read from the server.xml file
 # Assuming keystore is in /usr/local/jss/tomcat/. Must change if different. Thanks @SeanRabbit
-	JSS_KEYSTORE_LOCATION="/usr/local/jss/tomcat/$(sed -n 's/^.*certificateKeystoreFile=/certificateKeystoreFile=/p' $JSS_SERVER_XML | cut -d '"' -f2 | cut -d '/' -f2)"
+	JSS_KEYSTORE_LOCATION="$(sed -n 's/^.*certificateKeystoreFile=/certificateKeystoreFile=/p' $JSS_SERVER_XML | cut -d '"' -f2)"
 
 # JSS keystore password read from the server.xml file
 	JSS_STOREPASS=$(sed -n 's/^.*certificateKeystorePassword=/certificateKeystorePassword=/p' $JSS_SERVER_XML | cut -d '"' -f2)
@@ -173,10 +173,14 @@
 		echo "$(date "+%a %h %d %H:%M:%S"): $JSS_SERVICE is running. Stopping service now." 2>&1 | tee -a "$LOG"
 		$JAMF_PRO_CLI server stop 
 	else
-		echo "$(date "+%a %h %d %H:%M:%S"): $JSS_SERVICE not found. Exiting script!" 2>&1 | tee -a "$LOG"
-		echo "$(date "+%a %h %d %H:%M:%S"): If this is your first time running this script, you will need to remove /etc/letsencrypt and /var/git/letsencrypt" 2>&1 | tee -a "$LOG"
+		echo "$(date "+%a %h %d %H:%M:%S"): $JSS_SERVICE not running. Continuing with brute force just in case!" 2>&1 | tee -a "$LOG"
+		$JAMF_PRO_CLI server status
+		$JAMF_PRO_CLI server stop
+		$JAMF_PRO_CLI server status
+		#echo "$(date "+%a %h %d %H:%M:%S"): $JSS_SERVICE not found. Exiting script!" 2>&1 | tee -a "$LOG"
+		echo "$(date "+%a %h %d %H:%M:%S"): If something goes wrong, you will need to remove /etc/letsencrypt and /var/git/letsencrypt" 2>&1 | tee -a "$LOG"
 		echo "$(date "+%a %h %d %H:%M:%S"): If this has worked before for you, please check and see if Tomcat is running." 2>&1 | tee -a "$LOG"
-		exit 1
+		#exit 1
 	fi
 
 # Backing up the existing Keystore. This is primarily for safety. Never want to
